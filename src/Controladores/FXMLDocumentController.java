@@ -63,6 +63,8 @@ public class FXMLDocumentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         anyosVotos();
+        provinciaVotos((Integer)comboAnyoVotos.getSelectionModel().getSelectedItem());
+        regionVotos((String)comboProvVotos.getSelectionModel().getSelectedItem());
         comboAnyoVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -72,12 +74,15 @@ public class FXMLDocumentController implements Initializable {
         comboProvVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                regionVotos((String)comboProvVotos.getItems().get(newValue.intValue()));
+                if (newValue.intValue() != -1){
+                    regionVotos((String)comboProvVotos.getItems().get(newValue.intValue()));
+                }
             }
         });
     }    
     
     private void anyosVotos() {
+        comboAnyoVotos.getItems().clear();
         anyos = DataAccessLayer.getElectionYears();
         ObservableList<Integer> ob = FXCollections.observableList(anyos);
         comboAnyoVotos.setItems(ob);
@@ -85,6 +90,7 @@ public class FXMLDocumentController implements Initializable {
     }
     
     private void provinciaVotos(Integer anyo) {
+        comboProvVotos.getItems().clear();
         ArrayList<String> arrayProvincia = new ArrayList<>();
         Map<String,ProvinceInfo> mapProv;
         mapProv = DataAccessLayer.getElectionResults(anyo).getProvinces();
@@ -98,14 +104,15 @@ public class FXMLDocumentController implements Initializable {
         comboProvVotos.getSelectionModel().select(0);
     }
     
-    private void regionVotos(String mierdaDeBaseDeDatos) {
+    private void regionVotos(String nombreProvincias) {
         List<String> arrayRegion = new ArrayList<>();
-        if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM VALENCIANA")) {
+        if (nombreProvincias.equals("COM. VALENCIANA")) {
             comboRegVotos.getItems().clear();
             comboRegVotos.setDisable(true);
         }else {
+            comboRegVotos.setDisable(false);
             arrayRegion = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getProvinces()
-                                         .get(mierdaDeBaseDeDatos).getRegions();
+                                         .get(nombreProvincias).getRegions();
         }
         ObservableList<Object> ob = FXCollections.observableArrayList(arrayRegion);
         ob.add(0,new Separator());
