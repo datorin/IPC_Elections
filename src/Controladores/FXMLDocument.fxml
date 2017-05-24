@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 
-<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.102" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controladores.FXMLDocumentController">
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controladores.FXMLDocumentController">
   <tabs>
     <Tab text="Votos">
          <content>
@@ -31,7 +31,7 @@
                   <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Button fx:id="btnCalcularVotos" disable="true" mnemonicParsing="false" text="CALCULAR" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                  <Button fx:id="btnCalcularVotos" mnemonicParsing="false" onAction="#onCalcular" text="CALCULAR" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
                      <GridPane.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </GridPane.margin>
