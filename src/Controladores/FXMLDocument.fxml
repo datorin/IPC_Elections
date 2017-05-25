@@ -73,6 +73,16 @@
                </children>
             </GridPane>
          </content></Tab>
-    <Tab text="Participación" />
+    <Tab text="Participación">
+         <content>
+            <BarChart fx:id="barChartParticipacion">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </BarChart>
+         </content></Tab>
   </tabs>
 </TabPane>

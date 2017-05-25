@@ -5,6 +5,7 @@
  */
 package Controladores;
 
+import electionresults.model.ElectionResults;
 import electionresults.model.Party;
 import electionresults.model.ProvinceInfo;
 import electionresults.persistence.io.DataAccessLayer;
@@ -47,7 +48,8 @@ public class FXMLDocumentController implements Initializable {
     @FXML
     private BarChart<String, Double> barChartVotos;
 
-    private List<Integer> anyos;
+    @FXML
+    private BarChart<String, Double> barChartParticipacion;
 
     /**
      * Initializes the controller class.
@@ -71,10 +73,11 @@ public class FXMLDocumentController implements Initializable {
                 }
             }
         });
+        participacion();
     }
 
     private void anyosVotos() {
-        anyos = DataAccessLayer.getElectionYears();
+        List<Integer> anyos = DataAccessLayer.getElectionYears();
         ObservableList<Integer> ob = FXCollections.observableList(anyos);
         comboAnyoVotos.setItems(ob);
         comboAnyoVotos.getSelectionModel().select(0);
@@ -123,7 +126,7 @@ public class FXMLDocumentController implements Initializable {
                 // Esto es BarChart
                 XYChart.Series serie = new XYChart.Series();
                 serie.setName(p.getName());
-                serie.getData().add(new XYChart.Data("",calculoDeVotos(p)));
+                serie.getData().add(new XYChart.Data("", calculoDeVotos(p)));
                 barChartVotos.getData().add(serie);
             } catch (NullPointerException e) {
             }
@@ -134,32 +137,60 @@ public class FXMLDocumentController implements Initializable {
     private double calculoDeEscanos(Party p) {
         double dp;
         if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM. VALENCIANA")) {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getSeats();
+            dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getSeats();
         } else {
             if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
                 dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getProvinceResults((String)comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getSeats();
+                        getProvinceResults((String) comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getSeats();
             } else {
                 dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getRegionResults((String)comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getSeats();
+                        getRegionResults((String) comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getSeats();
             }
         }
         return dp;
     }
-    
-        private double calculoDeVotos(Party p) {
+
+    private double calculoDeVotos(Party p) {
         double dp;
         if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM. VALENCIANA")) {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getVotes();
+            dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getVotes();
         } else {
             if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
                 dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getProvinceResults((String)comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getVotes();
+                        getProvinceResults((String) comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getVotes();
             } else {
                 dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getRegionResults((String)comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getVotes();
+                        getRegionResults((String) comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getVotes();
             }
         }
         return dp;
+    }
+
+    private void participacion() {
+        ArrayList<String> arrayProvincia = new ArrayList<>();
+        Map<String, ProvinceInfo> mapProv;
+        mapProv = DataAccessLayer.getAllElectionResults().get(0).getProvinces();
+        for (String s : mapProv.keySet()) {
+            arrayProvincia.add(mapProv.get(s).getProvince());
+        }
+        List<Integer> anyos = DataAccessLayer.getElectionYears();
+        /*for (Integer i : anyos) {
+            for (String s : arrayProvincia) {
+                XYChart.Series serie = new XYChart.Series();
+                serie.setName(i.toString());
+                double d = DataAccessLayer.getElectionResults(i).getProvinceResults(s).getPollData().getVotes();
+                serie.getData().add(new XYChart.Data(i.toString(), d));
+                barChartParticipacion.getData().add(serie);
+            }
+        }*/
+        for (String s : arrayProvincia) {
+            for (Integer i : anyos) {
+                XYChart.Series serie = new XYChart.Series();
+                serie.setName(s);
+                double d = DataAccessLayer.getElectionResults(i).getProvinceResults(s).getPollData().getVotes();
+                serie.getData().add(new XYChart.Data(i.toString(), d));
+                barChartParticipacion.getData().add(serie);
+            }
+        }
     }
 }
