@@ -13,6 +13,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controladores.FXMLDocumentController">
@@ -21,7 +22,8 @@
          <content>
             <GridPane>
               <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                <ColumnConstraints />
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
               </columnConstraints>
               <rowConstraints>
@@ -31,7 +33,7 @@
                   <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Button fx:id="btnCalcularVotos" mnemonicParsing="false" onAction="#onCalcular" text="CALCULAR" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                  <Button fx:id="btnCalcularVotos" mnemonicParsing="false" onAction="#onCalcular" text="CALCULAR" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
                      <GridPane.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </GridPane.margin>
@@ -42,8 +44,8 @@
                         <Font name="System Bold" size="12.0" />
                      </font>
                   </Button>
-                  <PieChart fx:id="pieChartVotos" GridPane.rowIndex="1" />
-                  <HBox alignment="CENTER">
+                  <PieChart fx:id="pieChartVotos" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <HBox alignment="CENTER" GridPane.columnIndex="1">
                      <children>
                         <ChoiceBox fx:id="comboAnyoVotos" prefWidth="150.0">
                            <HBox.margin>
@@ -62,7 +64,7 @@
                         </ChoiceBox>
                      </children>
                   </HBox>
-                  <BarChart fx:id="barChartVotos" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                  <BarChart fx:id="barChartVotos" GridPane.columnIndex="2" GridPane.rowIndex="1">
                     <xAxis>
                       <CategoryAxis side="BOTTOM" />
                     </xAxis>
@@ -70,6 +72,7 @@
                       <NumberAxis side="LEFT" />
                     </yAxis>
                   </BarChart>
+                  <VBox fx:id="vBoxPartidos" GridPane.rowIndex="1" />
                </children>
             </GridPane>
          </content></Tab>

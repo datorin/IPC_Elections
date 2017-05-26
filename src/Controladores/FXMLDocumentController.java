@@ -20,12 +20,18 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 /**
  * FXML Controller class
@@ -49,6 +55,8 @@ public class FXMLDocumentController implements Initializable {
 
     @FXML
     private BarChart<String, Double> barChartParticipacion;
+    @FXML
+    private VBox vBoxPartidos;
 
     /**
      * Initializes the controller class.
@@ -117,6 +125,7 @@ public class FXMLDocumentController implements Initializable {
     @FXML
     private void onCalcular(ActionEvent event) {
         barChartVotos.getData().clear();
+        vBoxPartidos.getChildren().clear();
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
         for (Party p : Party.values()) {
             try {
@@ -139,10 +148,20 @@ public class FXMLDocumentController implements Initializable {
                 if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
                     nombre = comboProvVotos.getSelectionModel().getSelectedItem().toString();
                 } else {
-                    nombre = comboRegVotos.getSelectionModel().getSelectedItem()+" ("+
-                            comboProvVotos.getSelectionModel().getSelectedItem()+")";
+                    nombre = comboRegVotos.getSelectionModel().getSelectedItem() + " ("
+                            + comboProvVotos.getSelectionModel().getSelectedItem() + ")";
                 }
-                barChartVotos.setTitle("Votos de "+nombre+" en "+comboAnyoVotos.getSelectionModel().getSelectedItem());
+                barChartVotos.setTitle("Votos de " + nombre + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
+                // Esto es la VBox
+                HBox hb = new HBox();
+                ImageView iv = new ImageView(p.getLogo());
+                Label l = new Label(p.getName() + " (" + (int) calculoDeVPorcentajes(p) + "%)");
+                l.setStyle("-fx-font: 15 arial;");
+                l.setPadding(new Insets(0, 0, 0, 5));
+                hb.getChildren().addAll(iv, l);
+                hb.setAlignment(Pos.CENTER_LEFT);
+                hb.setPadding(new Insets(10, 10, 10, 10));
+                vBoxPartidos.getChildren().add(hb);
             } catch (NullPointerException e) {
             }
         }
@@ -181,6 +200,22 @@ public class FXMLDocumentController implements Initializable {
         return dp;
     }
 
+    private double calculoDeVPorcentajes(Party p) {
+        double dp;
+        if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM. VALENCIANA")) {
+            dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getPercentage();
+        } else {
+            if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
+                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
+                        getProvinceResults((String) comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getPercentage();
+            } else {
+                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
+                        getRegionResults((String) comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getPercentage();
+            }
+        }
+        return dp;
+    }
+
     private void participacion() {
         XYChart.Series serie1 = new XYChart.Series();
         serie1.setName("COM. VALENCIANA");
@@ -192,17 +227,17 @@ public class FXMLDocumentController implements Initializable {
         serie4.setName("Castellón");
         List<Integer> anyos = DataAccessLayer.getElectionYears();
         for (Integer i : anyos) {
-            double d1 = 100.0 * (double)DataAccessLayer.getElectionResults(i).getGlobalResults().getPollData().getVotes() 
-                    / (double)DataAccessLayer.getElectionResults(i).getGlobalResults().getPollData().getCensus();
+            double d1 = 100.0 * (double) DataAccessLayer.getElectionResults(i).getGlobalResults().getPollData().getVotes()
+                    / (double) DataAccessLayer.getElectionResults(i).getGlobalResults().getPollData().getCensus();
             serie1.getData().add(new XYChart.Data(i.toString(), d1));
-            double d2 = 100.0 * (double)DataAccessLayer.getElectionResults(i).getProvinceResults(serie2.getName()).getPollData().getVotes() 
-                    / (double)DataAccessLayer.getElectionResults(i).getProvinceResults(serie2.getName()).getPollData().getCensus();
+            double d2 = 100.0 * (double) DataAccessLayer.getElectionResults(i).getProvinceResults(serie2.getName()).getPollData().getVotes()
+                    / (double) DataAccessLayer.getElectionResults(i).getProvinceResults(serie2.getName()).getPollData().getCensus();
             serie2.getData().add(new XYChart.Data(i.toString(), d2));
-            double d3 =100.0 * (double)DataAccessLayer.getElectionResults(i).getProvinceResults(serie3.getName()).getPollData().getVotes() 
-                    / (double)DataAccessLayer.getElectionResults(i).getProvinceResults(serie3.getName()).getPollData().getCensus();
+            double d3 = 100.0 * (double) DataAccessLayer.getElectionResults(i).getProvinceResults(serie3.getName()).getPollData().getVotes()
+                    / (double) DataAccessLayer.getElectionResults(i).getProvinceResults(serie3.getName()).getPollData().getCensus();
             serie3.getData().add(new XYChart.Data(i.toString(), d3));
-            double d4 = 100.0 * (double)DataAccessLayer.getElectionResults(i).getProvinceResults(serie4.getName()).getPollData().getVotes() 
-                    / (double)DataAccessLayer.getElectionResults(i).getProvinceResults(serie4.getName()).getPollData().getCensus();
+            double d4 = 100.0 * (double) DataAccessLayer.getElectionResults(i).getProvinceResults(serie4.getName()).getPollData().getVotes()
+                    / (double) DataAccessLayer.getElectionResults(i).getProvinceResults(serie4.getName()).getPollData().getCensus();
             serie4.getData().add(new XYChart.Data(i.toString(), d4));
         }
         barChartParticipacion.getData().add(serie1);
