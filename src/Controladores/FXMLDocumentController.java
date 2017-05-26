@@ -30,6 +30,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -40,8 +41,6 @@ import javafx.scene.layout.VBox;
  */
 public class FXMLDocumentController implements Initializable {
 
-    @FXML
-    private Button btnCalcularVotos;
     @FXML
     private PieChart pieChartVotos;
     @FXML
@@ -57,6 +56,8 @@ public class FXMLDocumentController implements Initializable {
     private BarChart<String, Double> barChartParticipacion;
     @FXML
     private VBox vBoxPartidos;
+    @FXML
+    private GridPane gridPane;
 
     /**
      * Initializes the controller class.
@@ -70,6 +71,7 @@ public class FXMLDocumentController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 provinciaVotos((Integer) comboAnyoVotos.getItems().get(newValue.intValue()));
+                onCalcular();
             }
         });
         comboProvVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
@@ -77,9 +79,19 @@ public class FXMLDocumentController implements Initializable {
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 if (newValue.intValue() != -1) {
                     regionVotos((String) comboProvVotos.getItems().get(newValue.intValue()));
+                    onCalcular();
                 }
             }
         });
+        comboRegVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                if (newValue.intValue() != -1) {
+                    onCalcular();
+                }
+            }
+        });
+        onCalcular();
         participacion();
     }
 
@@ -122,8 +134,7 @@ public class FXMLDocumentController implements Initializable {
         comboRegVotos.getSelectionModel().select(0);
     }
 
-    @FXML
-    private void onCalcular(ActionEvent event) {
+    private void onCalcular() {
         barChartVotos.getData().clear();
         vBoxPartidos.getChildren().clear();
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
@@ -246,4 +257,5 @@ public class FXMLDocumentController implements Initializable {
         barChartParticipacion.getData().add(serie4);
         barChartParticipacion.setTitle("Evolución histórica de la participación electoral");
     }
+
 }

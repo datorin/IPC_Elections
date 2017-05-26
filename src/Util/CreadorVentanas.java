@@ -41,8 +41,8 @@ public class CreadorVentanas {
             double height = screenSize.getHeight();
             stageDocument.setMaxHeight(height);
             stageDocument.setMaxWidth(width);
-            stageDocument.setMinHeight(500);
-            stageDocument.setMinWidth(750);
+            stageDocument.setMinHeight(550);
+            stageDocument.setMinWidth(1200);
             stageDocument.setOnCloseRequest(new EventHandler<WindowEvent>() {
                 @Override
                 public void handle(WindowEvent event) {
