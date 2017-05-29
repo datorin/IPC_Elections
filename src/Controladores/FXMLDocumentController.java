@@ -5,6 +5,8 @@
  */
 package Controladores;
 
+import com.sun.javafx.charts.Legend;
+import com.sun.javafx.charts.Legend.LegendItem;
 import electionresults.model.Party;
 import electionresults.model.ProvinceInfo;
 import electionresults.persistence.io.DataAccessLayer;
@@ -18,24 +20,25 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 /**
  * FXML Controller class
@@ -63,6 +66,8 @@ public class FXMLDocumentController implements Initializable {
     private GridPane gridPane;
 
     private Integer test;
+    @FXML
+    private Slider sliderFiltro;
 
     /**
      * Initializes the controller class.
@@ -71,6 +76,7 @@ public class FXMLDocumentController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         hilos();
         anyosVotos();
+        makeSliderFilter(sliderFiltro);
         provinciaVotos((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem());
         regionVotos((String) comboProvVotos.getSelectionModel().getSelectedItem());
         comboAnyoVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
@@ -78,7 +84,7 @@ public class FXMLDocumentController implements Initializable {
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 provinciaVotos((Integer) comboAnyoVotos.getItems().get(newValue.intValue()));
                 onCalcular((Integer) comboAnyoVotos.getItems().get(newValue.intValue()),
-                        (String) comboProvVotos.getSelectionModel().getSelectedItem(), 
+                        (String) comboProvVotos.getSelectionModel().getSelectedItem(),
                         (String) comboRegVotos.getSelectionModel().getSelectedItem());
             }
         });
@@ -87,7 +93,7 @@ public class FXMLDocumentController implements Initializable {
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 if (newValue.intValue() != -1) {
                     regionVotos((String) comboProvVotos.getItems().get(newValue.intValue()));
-                    onCalcular((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(), 
+                    onCalcular((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(),
                             (String) comboProvVotos.getItems().get(newValue.intValue()),
                             (String) comboRegVotos.getSelectionModel().getSelectedItem());
                 }
@@ -98,8 +104,8 @@ public class FXMLDocumentController implements Initializable {
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 if (newValue.intValue() != -1) {
                     onCalcular((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(),
-                            (String) comboProvVotos.getSelectionModel().getSelectedItem()
-                            , (String) comboRegVotos.getItems().get(newValue.intValue()));
+                            (String) comboProvVotos.getSelectionModel().getSelectedItem(),
+                            (String) comboRegVotos.getItems().get(newValue.intValue()));
                 }
             }
         });
@@ -154,7 +160,7 @@ public class FXMLDocumentController implements Initializable {
         // Esto es PieChart
         calculoPieChart(anyo, provincia, region);
         // Esto es BarChart
-        calculoBarVotos(anyo, provincia, region);
+        calculoBarVotos(anyo, provincia, region, sliderFiltro);
         // Esto es la VBox
         calculoBarParticipacion(anyo, provincia, region);
     }
@@ -240,40 +246,51 @@ public class FXMLDocumentController implements Initializable {
 
     private void calculoPieChart(Integer anyo, String provincia, String region) {
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
+        ObservableList<LegendItem> legendObvList = FXCollections.observableArrayList();
         for (Party p : Party.values()) {
             try {
                 if (region.equals("REGIONES")) {
-                    pieChartVotos.setTitle("Escaños de " + provincia
-                            + " en " + anyo);
-                    String c = p.getColor().toString().substring(2);
+                    pieChartVotos.setTitle("Escaños de " + provincia + " en " + anyo);
                     PieChart.Data pp = new PieChart.Data(p.getName() + "(" + (int) calculoDeEscanos(p, anyo, provincia, region) + ")", calculoDeEscanos(p, anyo, provincia, region));
+                    makeListenerColorPCEscanos(pp, p);
                     pieChartData.add(pp);
+                    Legend.LegendItem li = new Legend.LegendItem(p.getName(), new Rectangle(10, 10, p.getColor()));
+                    legendObvList.add(li);
                 } else {
                     pieChartVotos.setTitle("No hay escaños para las regiones");
                 }
             } catch (NullPointerException e) {
             }
         }
+        try {
+            Legend legend = (Legend) pieChartVotos.lookup(".chart-legend");
+            legend.setItems(legendObvList);
+        } catch (Exception e) {
+        }
         pieChartVotos.setData(pieChartData);
     }
 
-    private void calculoBarVotos(Integer anyo, String provincia, String region) {
+    private void calculoBarVotos(Integer anyo, String provincia, String region, Slider slider) {
         for (Party p : Party.values()) {
             try {
-                XYChart.Series serie = new XYChart.Series();
-                serie.setName(p.getName());
-                serie.getData().add(new XYChart.Data("", calculoDeVotos(p, anyo, provincia, region)));
-                barChartVotos.getData().add(serie);
-                String nombre = "";
-                if (region.equals("REGIONES")) {
-                    nombre = provincia;
-                } else {
-                    nombre = region + " (" + provincia + ")";
+                if (slider.getValue() < calculoDeVPorcentajes(p, anyo, provincia, region)) {
+                    XYChart.Series serie = new XYChart.Series();
+                    serie.setName(p.getName());
+                    XYChart.Data data = new XYChart.Data("", calculoDeVotos(p, anyo, provincia, region));
+                    makeListenerColorBCVotos(data, p);
+                    serie.getData().add(data);
+                    barChartVotos.getData().add(serie);
                 }
-                barChartVotos.setTitle("Votos de " + nombre + " en " + anyo);
             } catch (NullPointerException e) {
             }
         }
+        String nombre = "";
+        if (region.equals("REGIONES")) {
+            nombre = provincia;
+        } else {
+            nombre = region + " (" + provincia + ")";
+        }
+        barChartVotos.setTitle("Votos de " + nombre + " en " + anyo);
     }
 
     private void calculoBarParticipacion(Integer anyo, String provincia, String region) {
@@ -310,5 +327,40 @@ public class FXMLDocumentController implements Initializable {
         });
         Thread thread = new Thread(t);
         thread.run();
+    }
+
+    private void makeListenerColorPCEscanos(PieChart.Data data, Party p) {
+        data.nodeProperty().addListener(new ChangeListener<Node>() {
+            @Override
+            public void changed(ObservableValue<? extends Node> observable, Node oldValue, Node newValue) {
+                if (newValue != null) {
+                    newValue.setStyle("-fx-pie-color: " + p.getHexColor() + ";");
+                }
+            }
+        });
+    }
+
+    private void makeListenerColorBCVotos(XYChart.Data<String, Number> data, Party p) {
+        data.nodeProperty().addListener(new ChangeListener<Node>() {
+            @Override
+            public void changed(ObservableValue<? extends Node> observable, Node oldValue, Node newValue) {
+                if (newValue != null) {
+                    newValue.setStyle("-fx-bar-fill: " + p.getHexColor() + ";");
+                }
+            }
+        });
+
+    }
+
+    private void makeSliderFilter(Slider slider) {
+        slider.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                barChartVotos.getData().clear();
+                calculoBarVotos((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(),
+                        (String) comboProvVotos.getSelectionModel().getSelectedItem(),
+                        (String) comboRegVotos.getSelectionModel().getSelectedItem(), slider);
+            }
+        });
     }
 }
