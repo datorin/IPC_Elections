@@ -12,6 +12,7 @@ import electionresults.model.ProvinceInfo;
 import electionresults.persistence.io.DataAccessLayer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -117,6 +118,7 @@ public class FXMLDocumentController implements Initializable {
 
     private void anyosVotos() {
         List<Integer> anyos = DataAccessLayer.getElectionYears();
+        Collections.reverse(anyos);
         ObservableList<Integer> ob = FXCollections.observableList(anyos);
         comboAnyoVotos.setItems(ob);
         comboAnyoVotos.getSelectionModel().select(0);
