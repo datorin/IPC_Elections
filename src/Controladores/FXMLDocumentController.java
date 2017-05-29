@@ -61,7 +61,7 @@ public class FXMLDocumentController implements Initializable {
     private VBox vBoxPartidos;
     @FXML
     private GridPane gridPane;
-    
+
     private Integer test;
 
     /**
@@ -77,6 +77,9 @@ public class FXMLDocumentController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 provinciaVotos((Integer) comboAnyoVotos.getItems().get(newValue.intValue()));
+                onCalcular((Integer) comboAnyoVotos.getItems().get(newValue.intValue()),
+                        (String) comboProvVotos.getSelectionModel().getSelectedItem(), 
+                        (String) comboRegVotos.getSelectionModel().getSelectedItem());
             }
         });
         comboProvVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
@@ -84,7 +87,9 @@ public class FXMLDocumentController implements Initializable {
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 if (newValue.intValue() != -1) {
                     regionVotos((String) comboProvVotos.getItems().get(newValue.intValue()));
-                    onCalcular();
+                    onCalcular((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(), 
+                            (String) comboProvVotos.getItems().get(newValue.intValue()),
+                            (String) comboRegVotos.getSelectionModel().getSelectedItem());
                 }
             }
         });
@@ -92,11 +97,15 @@ public class FXMLDocumentController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 if (newValue.intValue() != -1) {
-                    onCalcular();
+                    onCalcular((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(),
+                            (String) comboProvVotos.getSelectionModel().getSelectedItem()
+                            , (String) comboRegVotos.getItems().get(newValue.intValue()));
                 }
             }
         });
-        onCalcular();
+        onCalcular((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem(),
+                (String) comboProvVotos.getSelectionModel().getSelectedItem(),
+                (String) comboRegVotos.getSelectionModel().getSelectedItem());
         participacion();
     }
 
@@ -139,60 +148,60 @@ public class FXMLDocumentController implements Initializable {
         comboRegVotos.getSelectionModel().select(0);
     }
 
-    private void onCalcular() {
+    private void onCalcular(Integer anyo, String provincia, String region) {
         barChartVotos.getData().clear();
         vBoxPartidos.getChildren().clear();
         // Esto es PieChart
-        calculoPieChart();
+        calculoPieChart(anyo, provincia, region);
         // Esto es BarChart
-        calculoBarVotos();
+        calculoBarVotos(anyo, provincia, region);
         // Esto es la VBox
-        calculoBarParticipacion();
+        calculoBarParticipacion(anyo, provincia, region);
     }
 
-    private double calculoDeEscanos(Party p) {
+    private double calculoDeEscanos(Party p, Integer anyo, String provincia, String region) {
         double dp;
-        if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM. VALENCIANA")) {
-            dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getSeats();
+        if (provincia.equals("COM. VALENCIANA")) {
+            dp = DataAccessLayer.getElectionResults(anyo).getGlobalResults().getPartyResults(p.getName()).getSeats();
         } else {
-            if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getProvinceResults((String) comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getSeats();
+            if (region.equals("REGIONES")) {
+                dp = DataAccessLayer.getElectionResults(anyo).
+                        getProvinceResults(provincia).getPartyResults(p.getName()).getSeats();
             } else {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getRegionResults((String) comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getSeats();
+                dp = DataAccessLayer.getElectionResults(anyo).
+                        getRegionResults(region).getPartyResults(p.getName()).getSeats();
             }
         }
         return dp;
     }
 
-    private double calculoDeVotos(Party p) {
+    private double calculoDeVotos(Party p, Integer anyo, String provincia, String region) {
         double dp;
-        if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM. VALENCIANA")) {
-            dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getVotes();
+        if (provincia.equals("COM. VALENCIANA")) {
+            dp = DataAccessLayer.getElectionResults(anyo).getGlobalResults().getPartyResults(p.getName()).getVotes();
         } else {
-            if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getProvinceResults((String) comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getVotes();
+            if (region.equals("REGIONES")) {
+                dp = DataAccessLayer.getElectionResults(anyo).
+                        getProvinceResults(provincia).getPartyResults(p.getName()).getVotes();
             } else {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getRegionResults((String) comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getVotes();
+                dp = DataAccessLayer.getElectionResults(anyo).
+                        getRegionResults(region).getPartyResults(p.getName()).getVotes();
             }
         }
         return dp;
     }
 
-    private double calculoDeVPorcentajes(Party p) {
+    private double calculoDeVPorcentajes(Party p, Integer anyo, String provincia, String region) {
         double dp;
-        if (comboProvVotos.getSelectionModel().getSelectedItem().equals("COM. VALENCIANA")) {
-            dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).getGlobalResults().getPartyResults(p.getName()).getPercentage();
+        if (provincia.equals("COM. VALENCIANA")) {
+            dp = DataAccessLayer.getElectionResults(anyo).getGlobalResults().getPartyResults(p.getName()).getPercentage();
         } else {
-            if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getProvinceResults((String) comboProvVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getPercentage();
+            if (region.equals("REGIONES")) {
+                dp = DataAccessLayer.getElectionResults(anyo).
+                        getProvinceResults(provincia).getPartyResults(p.getName()).getPercentage();
             } else {
-                dp = DataAccessLayer.getElectionResults(comboAnyoVotos.getSelectionModel().getSelectedItem()).
-                        getRegionResults((String) comboRegVotos.getSelectionModel().getSelectedItem()).getPartyResults(p.getName()).getPercentage();
+                dp = DataAccessLayer.getElectionResults(anyo).
+                        getRegionResults(region).getPartyResults(p.getName()).getPercentage();
             }
         }
         return dp;
@@ -229,15 +238,15 @@ public class FXMLDocumentController implements Initializable {
         barChartParticipacion.setTitle("Evolución histórica de la participación electoral");
     }
 
-    private void calculoPieChart() {
+    private void calculoPieChart(Integer anyo, String provincia, String region) {
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
         for (Party p : Party.values()) {
             try {
-                if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                    pieChartVotos.setTitle("Escaños de " + comboProvVotos.getSelectionModel().getSelectedItem()
-                            + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
+                if (region.equals("REGIONES")) {
+                    pieChartVotos.setTitle("Escaños de " + provincia
+                            + " en " + anyo);
                     String c = p.getColor().toString().substring(2);
-                    PieChart.Data pp = new PieChart.Data(p.getName() + "(" + (int) calculoDeEscanos(p) + ")", calculoDeEscanos(p));
+                    PieChart.Data pp = new PieChart.Data(p.getName() + "(" + (int) calculoDeEscanos(p, anyo, provincia, region) + ")", calculoDeEscanos(p, anyo, provincia, region));
                     pieChartData.add(pp);
                 } else {
                     pieChartVotos.setTitle("No hay escaños para las regiones");
@@ -248,32 +257,31 @@ public class FXMLDocumentController implements Initializable {
         pieChartVotos.setData(pieChartData);
     }
 
-    private void calculoBarVotos() {
+    private void calculoBarVotos(Integer anyo, String provincia, String region) {
         for (Party p : Party.values()) {
             try {
                 XYChart.Series serie = new XYChart.Series();
                 serie.setName(p.getName());
-                serie.getData().add(new XYChart.Data("", calculoDeVotos(p)));
+                serie.getData().add(new XYChart.Data("", calculoDeVotos(p, anyo, provincia, region)));
                 barChartVotos.getData().add(serie);
                 String nombre = "";
-                if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                    nombre = comboProvVotos.getSelectionModel().getSelectedItem().toString();
+                if (region.equals("REGIONES")) {
+                    nombre = provincia;
                 } else {
-                    nombre = comboRegVotos.getSelectionModel().getSelectedItem() + " ("
-                            + comboProvVotos.getSelectionModel().getSelectedItem() + ")";
+                    nombre = region + " (" + provincia + ")";
                 }
-                barChartVotos.setTitle("Votos de " + nombre + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
+                barChartVotos.setTitle("Votos de " + nombre + " en " + anyo);
             } catch (NullPointerException e) {
             }
         }
     }
 
-    private void calculoBarParticipacion() {
+    private void calculoBarParticipacion(Integer anyo, String provincia, String region) {
         for (Party p : Party.values()) {
             try {
                 HBox hb = new HBox();
                 ImageView iv = new ImageView(p.getLogo());
-                Label l = new Label(p.getName() + " (" + (int) calculoDeVPorcentajes(p) + "%)");
+                Label l = new Label(p.getName() + " (" + (int) calculoDeVPorcentajes(p, anyo, provincia, region) + "%)");
                 l.setStyle("-fx-font: 15 arial;");
                 l.setPadding(new Insets(0, 0, 0, 5));
                 hb.getChildren().addAll(iv, l);
@@ -284,8 +292,8 @@ public class FXMLDocumentController implements Initializable {
             }
         }
     }
-    
-    private void hilos(){
+
+    private void hilos() {
         Task t = new Task() {
             @Override
             protected Object call() throws Exception {
