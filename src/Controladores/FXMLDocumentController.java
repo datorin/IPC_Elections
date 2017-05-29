@@ -17,7 +17,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -58,12 +61,15 @@ public class FXMLDocumentController implements Initializable {
     private VBox vBoxPartidos;
     @FXML
     private GridPane gridPane;
+    
+    private Integer test;
 
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        hilos();
         anyosVotos();
         provinciaVotos((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem());
         regionVotos((String) comboProvVotos.getSelectionModel().getSelectedItem());
@@ -71,7 +77,6 @@ public class FXMLDocumentController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 provinciaVotos((Integer) comboAnyoVotos.getItems().get(newValue.intValue()));
-                onCalcular();
             }
         });
         comboProvVotos.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
@@ -137,46 +142,12 @@ public class FXMLDocumentController implements Initializable {
     private void onCalcular() {
         barChartVotos.getData().clear();
         vBoxPartidos.getChildren().clear();
-        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
-        for (Party p : Party.values()) {
-            try {
-                // Esto es PieChart
-                if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                    pieChartVotos.setTitle("Escaños de " + comboProvVotos.getSelectionModel().getSelectedItem()
-                            + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
-                    String c = p.getColor().toString().substring(2);
-                    PieChart.Data pp = new PieChart.Data(p.getName() + "(" + (int) calculoDeEscanos(p) + ")", calculoDeEscanos(p));
-                    pieChartData.add(pp);
-                } else {
-                    pieChartVotos.setTitle("No hay escaños para las regiones");
-                }
-                // Esto es BarChart
-                XYChart.Series serie = new XYChart.Series();
-                serie.setName(p.getName());
-                serie.getData().add(new XYChart.Data("", calculoDeVotos(p)));
-                barChartVotos.getData().add(serie);
-                String nombre = "";
-                if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
-                    nombre = comboProvVotos.getSelectionModel().getSelectedItem().toString();
-                } else {
-                    nombre = comboRegVotos.getSelectionModel().getSelectedItem() + " ("
-                            + comboProvVotos.getSelectionModel().getSelectedItem() + ")";
-                }
-                barChartVotos.setTitle("Votos de " + nombre + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
-                // Esto es la VBox
-                HBox hb = new HBox();
-                ImageView iv = new ImageView(p.getLogo());
-                Label l = new Label(p.getName() + " (" + (int) calculoDeVPorcentajes(p) + "%)");
-                l.setStyle("-fx-font: 15 arial;");
-                l.setPadding(new Insets(0, 0, 0, 5));
-                hb.getChildren().addAll(iv, l);
-                hb.setAlignment(Pos.CENTER_LEFT);
-                hb.setPadding(new Insets(10, 10, 10, 10));
-                vBoxPartidos.getChildren().add(hb);
-            } catch (NullPointerException e) {
-            }
-        }
-        pieChartVotos.setData(pieChartData);
+        // Esto es PieChart
+        calculoPieChart();
+        // Esto es BarChart
+        calculoBarVotos();
+        // Esto es la VBox
+        calculoBarParticipacion();
     }
 
     private double calculoDeEscanos(Party p) {
@@ -258,4 +229,78 @@ public class FXMLDocumentController implements Initializable {
         barChartParticipacion.setTitle("Evolución histórica de la participación electoral");
     }
 
+    private void calculoPieChart() {
+        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
+        for (Party p : Party.values()) {
+            try {
+                if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
+                    pieChartVotos.setTitle("Escaños de " + comboProvVotos.getSelectionModel().getSelectedItem()
+                            + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
+                    String c = p.getColor().toString().substring(2);
+                    PieChart.Data pp = new PieChart.Data(p.getName() + "(" + (int) calculoDeEscanos(p) + ")", calculoDeEscanos(p));
+                    pieChartData.add(pp);
+                } else {
+                    pieChartVotos.setTitle("No hay escaños para las regiones");
+                }
+            } catch (NullPointerException e) {
+            }
+        }
+        pieChartVotos.setData(pieChartData);
+    }
+
+    private void calculoBarVotos() {
+        for (Party p : Party.values()) {
+            try {
+                XYChart.Series serie = new XYChart.Series();
+                serie.setName(p.getName());
+                serie.getData().add(new XYChart.Data("", calculoDeVotos(p)));
+                barChartVotos.getData().add(serie);
+                String nombre = "";
+                if (comboRegVotos.getSelectionModel().getSelectedItem().equals("REGIONES")) {
+                    nombre = comboProvVotos.getSelectionModel().getSelectedItem().toString();
+                } else {
+                    nombre = comboRegVotos.getSelectionModel().getSelectedItem() + " ("
+                            + comboProvVotos.getSelectionModel().getSelectedItem() + ")";
+                }
+                barChartVotos.setTitle("Votos de " + nombre + " en " + comboAnyoVotos.getSelectionModel().getSelectedItem());
+            } catch (NullPointerException e) {
+            }
+        }
+    }
+
+    private void calculoBarParticipacion() {
+        for (Party p : Party.values()) {
+            try {
+                HBox hb = new HBox();
+                ImageView iv = new ImageView(p.getLogo());
+                Label l = new Label(p.getName() + " (" + (int) calculoDeVPorcentajes(p) + "%)");
+                l.setStyle("-fx-font: 15 arial;");
+                l.setPadding(new Insets(0, 0, 0, 5));
+                hb.getChildren().addAll(iv, l);
+                hb.setAlignment(Pos.CENTER_LEFT);
+                hb.setPadding(new Insets(10, 10, 10, 10));
+                vBoxPartidos.getChildren().add(hb);
+            } catch (NullPointerException e) {
+            }
+        }
+    }
+    
+    private void hilos(){
+        Task t = new Task() {
+            @Override
+            protected Object call() throws Exception {
+                System.out.println("Estoy haciendo cosas"); //To change body of generated methods, choose Tools | Templates.
+                test = 1;
+                return null;
+            }
+        };
+        t.setOnSucceeded(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                System.out.println(test);
+            }
+        });
+        Thread thread = new Thread(t);
+        thread.run();
+    }
 }
