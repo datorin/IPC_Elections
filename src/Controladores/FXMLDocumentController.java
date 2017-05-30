@@ -75,7 +75,6 @@ public class FXMLDocumentController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        hilos();
         anyosVotos();
         makeSliderFilter(sliderFiltro);
         provinciaVotos((Integer) comboAnyoVotos.getSelectionModel().getSelectedItem());
@@ -157,10 +156,10 @@ public class FXMLDocumentController implements Initializable {
     }
 
     private void onCalcular(Integer anyo, String provincia, String region) {
-        barChartVotos.getData().clear();;
+        barChartVotos.getData().clear();
         vBoxPartidos.getChildren().clear();
         // Esto es PieChart
-        calculoPieChart(anyo, provincia, region);
+        hilo1(anyo, provincia, region);
         // Esto es BarChart
         calculoBarVotos(anyo, provincia, region, sliderFiltro);
         // Esto es la VBox
@@ -246,34 +245,39 @@ public class FXMLDocumentController implements Initializable {
         barChartParticipacion.setTitle("Evolución histórica de la participación electoral");
     }
 
-    private void calculoPieChart(Integer anyo, String provincia, String region) {
+    private Object[] calculoPieChart(Integer anyo, String provincia, String region) {
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
         ObservableList<LegendItem> legendObvList = FXCollections.observableArrayList();
+        Object[] result = new Object[2];
         for (Party p : Party.values()) {
             try {
                 if (region.equals("REGIONES")) {
-                    pieChartVotos.setTitle("Escaños de " + provincia + " en " + anyo);
+                    //pieChartVotos.setTitle("Escaños de " + provincia + " en " + anyo);
                     PieChart.Data pp = new PieChart.Data(p.getName() + "(" + (int) calculoDeEscanos(p, anyo, provincia, region) + ")", calculoDeEscanos(p, anyo, provincia, region));
                     makeListenerColorPCEscanos(pp, p);
                     Legend.LegendItem li = new Legend.LegendItem(p.getName(), new Rectangle(10, 10, p.getColor()));
                     legendObvList.add(li);
                     pieChartData.add(pp);
                 } else {
-                    pieChartVotos.setTitle("No hay escaños para las regiones");
+                    //pieChartVotos.setTitle("No hay escaños para las regiones");
                 }
             } catch (NullPointerException e) {
             }
         }
-        pieChartVotos.setData(pieChartData);
-        try {
+        result[0] = pieChartData;
+        result[1] = legendObvList;
+        return result;
+        //pieChartVotos.setData(pieChartData);
+        /*try {
             Legend legend = (Legend) pieChartVotos.lookup(".chart-legend");
             legend.setItems(legendObvList);
         } catch (NullPointerException e) {
-        }
+        }*/
     }
 
     private void calculoBarVotos(Integer anyo, String provincia, String region, Slider slider) {
         ObservableList<LegendItem> legendObvList = FXCollections.observableArrayList();
+        ObservableList<XYChart.Series<String, Double>> series = FXCollections.observableArrayList();
         for (Party p : Party.values()) {
             try {
                 if (slider.getValue() < calculoDeVPorcentajes(p, anyo, provincia, region)) {
@@ -285,6 +289,7 @@ public class FXMLDocumentController implements Initializable {
                     Legend.LegendItem li = new Legend.LegendItem(p.getName(), new Rectangle(10, 10, p.getColor()));
                     legendObvList.add(li);
                     barChartVotos.getData().add(serie);
+                    series.add(serie);
                 }
             } catch (NullPointerException e) {
             }
@@ -320,25 +325,69 @@ public class FXMLDocumentController implements Initializable {
         }
     }
 
-    private void hilos() {
+    private void hilo1(Integer anyo, String provincia, String region) {
         Task t = new Task() {
             @Override
             protected Object call() throws Exception {
-                System.out.println("Estoy haciendo cosas"); //To change body of generated methods, choose Tools | Templates.
-                test = 1;
-                return null;
+                return calculoPieChart(anyo, provincia, region);
             }
         };
-        t.setOnSucceeded(new EventHandler() {
+        t.setOnSucceeded(
+                new EventHandler() {
             @Override
-            public void handle(Event event) {
-                System.out.println(test);
+            public void handle(Event event
+            ) {
+                Object[] aux = (Object[]) t.getValue();
+                pieChartVotos.setData((ObservableList<PieChart.Data>) aux[0]);
+                try {
+                    Legend legend = (Legend) pieChartVotos.lookup(".chart-legend");
+                    legend.setItems((ObservableList<LegendItem>) aux[1]);
+                } catch (NullPointerException e) {
+                }
+                if (region.equals("REGIONES")) {
+                    pieChartVotos.setTitle("Escaños de " + provincia + " en " + anyo);
+                } else {
+                    pieChartVotos.setTitle("No hay escaños para las regiones");
+                }
             }
-        });
+        }
+        );
         Thread thread = new Thread(t);
         thread.run();
     }
 
+    /*private void hilo2(Integer anyo, String provincia, String region, Slider slider) {
+        Task t2 = new Task() {
+            @Override
+            protected Object call() throws Exception {
+                return calculoBarVotos(anyo, provincia, region, slider);
+            }
+        };
+        t2.setOnSucceeded(
+                new EventHandler() {
+            @Override
+            public void handle(Event event
+            ) {
+                Object[] aux = (Object[]) t2.getValue();
+                String nombre = "";
+                if (region.equals("REGIONES")) {
+                    nombre = provincia;
+                } else {
+                    nombre = region + " (" + provincia + ")";
+                }
+                barChartVotos.setData((ObservableList<XYChart.Series<String, Double>>) aux[0]);
+                barChartVotos.setTitle("Votos de " + nombre + " en " + anyo);
+                try {
+                    Legend legend = (Legend) barChartVotos.lookup(".chart-legend");
+                    legend.setItems((ObservableList<LegendItem>) aux[1]);
+                } catch (NullPointerException e) {
+                }
+            }
+        }
+        );
+        Thread thread2 = new Thread(t2);
+        thread2.run();
+    }*/
     private void makeListenerColorPCEscanos(PieChart.Data data, Party p) {
         data.nodeProperty().addListener(new ChangeListener<Node>() {
             @Override
